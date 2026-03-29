@@ -1,0 +1,769 @@
+{
+  "summaries": {
+    "tba_tpe": [
+      {
+        "optimizer": "tba_tpe",
+        "seed": 0,
+        "budget": 25,
+        "n_crashes": 8,
+        "n_infeasible": 1,
+        "n_feasible": 16,
+        "wasted_fraction": 0.36,
+        "best_feasible_obj": 3019.449595980922,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 248.69977402687073
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 1,
+        "budget": 25,
+        "n_crashes": 5,
+        "n_infeasible": 0,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 2996.5904801640613,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 105.27960085868835
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 2,
+        "budget": 25,
+        "n_crashes": 9,
+        "n_infeasible": 0,
+        "n_feasible": 16,
+        "wasted_fraction": 0.36,
+        "best_feasible_obj": 3194.752087444648,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 114.94883823394775
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 3,
+        "budget": 25,
+        "n_crashes": 2,
+        "n_infeasible": 0,
+        "n_feasible": 23,
+        "wasted_fraction": 0.08,
+        "best_feasible_obj": 7430.992206702737,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 208.47127771377563
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 4,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 3,
+        "n_feasible": 18,
+        "wasted_fraction": 0.28,
+        "best_feasible_obj": 5110.714333400622,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 280.28069019317627
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 5,
+        "budget": 25,
+        "n_crashes": 5,
+        "n_infeasible": 0,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 7533.461936479234,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 94.89615654945374
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 6,
+        "budget": 25,
+        "n_crashes": 5,
+        "n_infeasible": 1,
+        "n_feasible": 19,
+        "wasted_fraction": 0.24,
+        "best_feasible_obj": 3820.548822172265,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 553.3842992782593
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 7,
+        "budget": 25,
+        "n_crashes": 6,
+        "n_infeasible": 0,
+        "n_feasible": 19,
+        "wasted_fraction": 0.24,
+        "best_feasible_obj": 6867.479857236307,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 89.4965672492981
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 8,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 0,
+        "n_feasible": 21,
+        "wasted_fraction": 0.16,
+        "best_feasible_obj": 4181.2655821815115,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 110.45294117927551
+      },
+      {
+        "optimizer": "tba_tpe",
+        "seed": 9,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 0,
+        "n_feasible": 21,
+        "wasted_fraction": 0.16,
+        "best_feasible_obj": 6711.1672963905385,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 115.13558292388916
+      }
+    ],
+    "tba_sa": [
+      {
+        "optimizer": "tba_sa",
+        "seed": 0,
+        "budget": 25,
+        "n_crashes": 6,
+        "n_infeasible": 0,
+        "n_feasible": 19,
+        "wasted_fraction": 0.24,
+        "best_feasible_obj": 4508.084283025538,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 116.5811676979065
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 1,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 0,
+        "n_feasible": 21,
+        "wasted_fraction": 0.16,
+        "best_feasible_obj": 4423.352153490474,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 97.10731863975525
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 2,
+        "budget": 25,
+        "n_crashes": 6,
+        "n_infeasible": 0,
+        "n_feasible": 19,
+        "wasted_fraction": 0.24,
+        "best_feasible_obj": 3982.544507762504,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 105.31218385696411
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 3,
+        "budget": 25,
+        "n_crashes": 5,
+        "n_infeasible": 0,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 288.6408982470882,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 230.34248852729797
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 4,
+        "budget": 25,
+        "n_crashes": 2,
+        "n_infeasible": 2,
+        "n_feasible": 21,
+        "wasted_fraction": 0.16,
+        "best_feasible_obj": 7602.793931283207,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 154.6429009437561
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 5,
+        "budget": 25,
+        "n_crashes": 3,
+        "n_infeasible": 2,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 4213.11430104292,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 134.71393632888794
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 6,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 1,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 1401.824178266472,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 337.52117013931274
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 7,
+        "budget": 25,
+        "n_crashes": 3,
+        "n_infeasible": 0,
+        "n_feasible": 22,
+        "wasted_fraction": 0.12,
+        "best_feasible_obj": 4245.486783367829,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 92.0871193408966
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 8,
+        "budget": 25,
+        "n_crashes": 1,
+        "n_infeasible": 0,
+        "n_feasible": 24,
+        "wasted_fraction": 0.04,
+        "best_feasible_obj": 3894.1359660327803,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 119.09624004364014
+      },
+      {
+        "optimizer": "tba_sa",
+        "seed": 9,
+        "budget": 25,
+        "n_crashes": 2,
+        "n_infeasible": 3,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 6749.001675516905,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 293.3367700576782
+      }
+    ],
+    "random": [
+      {
+        "optimizer": "random",
+        "seed": 0,
+        "budget": 25,
+        "n_crashes": 19,
+        "n_infeasible": 0,
+        "n_feasible": 6,
+        "wasted_fraction": 0.76,
+        "best_feasible_obj": 4581.615465835548,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 109.70318508148193
+      },
+      {
+        "optimizer": "random",
+        "seed": 1,
+        "budget": 25,
+        "n_crashes": 12,
+        "n_infeasible": 3,
+        "n_feasible": 10,
+        "wasted_fraction": 0.6,
+        "best_feasible_obj": 4207.888634347691,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 247.50859475135803
+      },
+      {
+        "optimizer": "random",
+        "seed": 2,
+        "budget": 25,
+        "n_crashes": 13,
+        "n_infeasible": 4,
+        "n_feasible": 8,
+        "wasted_fraction": 0.68,
+        "best_feasible_obj": 4935.520509238703,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 439.6842348575592
+      },
+      {
+        "optimizer": "random",
+        "seed": 3,
+        "budget": 25,
+        "n_crashes": 13,
+        "n_infeasible": 1,
+        "n_feasible": 11,
+        "wasted_fraction": 0.56,
+        "best_feasible_obj": 5035.606458429822,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 190.03363466262817
+      },
+      {
+        "optimizer": "random",
+        "seed": 4,
+        "budget": 25,
+        "n_crashes": 11,
+        "n_infeasible": 0,
+        "n_feasible": 14,
+        "wasted_fraction": 0.44,
+        "best_feasible_obj": 4460.5320968495835,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 119.01074075698853
+      },
+      {
+        "optimizer": "random",
+        "seed": 5,
+        "budget": 25,
+        "n_crashes": 7,
+        "n_infeasible": 1,
+        "n_feasible": 17,
+        "wasted_fraction": 0.32,
+        "best_feasible_obj": 7198.415088137284,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 198.9391450881958
+      },
+      {
+        "optimizer": "random",
+        "seed": 6,
+        "budget": 25,
+        "n_crashes": 12,
+        "n_infeasible": 3,
+        "n_feasible": 10,
+        "wasted_fraction": 0.6,
+        "best_feasible_obj": 6665.111474327664,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 200.45181941986084
+      },
+      {
+        "optimizer": "random",
+        "seed": 7,
+        "budget": 25,
+        "n_crashes": 14,
+        "n_infeasible": 1,
+        "n_feasible": 10,
+        "wasted_fraction": 0.6,
+        "best_feasible_obj": 2120.3831638861116,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 160.725191116333
+      },
+      {
+        "optimizer": "random",
+        "seed": 8,
+        "budget": 25,
+        "n_crashes": 10,
+        "n_infeasible": 1,
+        "n_feasible": 14,
+        "wasted_fraction": 0.44,
+        "best_feasible_obj": 3231.1326089491663,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 220.4484269618988
+      },
+      {
+        "optimizer": "random",
+        "seed": 9,
+        "budget": 25,
+        "n_crashes": 10,
+        "n_infeasible": 1,
+        "n_feasible": 14,
+        "wasted_fraction": 0.44,
+        "best_feasible_obj": 5143.151588123294,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 171.70462036132812
+      }
+    ],
+    "tpe": [
+      {
+        "optimizer": "tpe",
+        "seed": 0,
+        "budget": 25,
+        "n_crashes": 5,
+        "n_infeasible": 1,
+        "n_feasible": 19,
+        "wasted_fraction": 0.24,
+        "best_feasible_obj": 4634.796568876895,
+        "time_to_first_feasible": 3,
+        "wall_clock_s": 132.86087560653687
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 1,
+        "budget": 25,
+        "n_crashes": 7,
+        "n_infeasible": 2,
+        "n_feasible": 16,
+        "wasted_fraction": 0.36,
+        "best_feasible_obj": 3333.5078521150926,
+        "time_to_first_feasible": 3,
+        "wall_clock_s": 217.20280122756958
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 2,
+        "budget": 25,
+        "n_crashes": 6,
+        "n_infeasible": 0,
+        "n_feasible": 19,
+        "wasted_fraction": 0.24,
+        "best_feasible_obj": 4370.1370084463215,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 103.4952392578125
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 3,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 1,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 6985.794703743885,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 191.65243077278137
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 4,
+        "budget": 25,
+        "n_crashes": 5,
+        "n_infeasible": 0,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 7056.828937756124,
+        "time_to_first_feasible": 3,
+        "wall_clock_s": 115.58384466171265
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 5,
+        "budget": 25,
+        "n_crashes": 6,
+        "n_infeasible": 1,
+        "n_feasible": 18,
+        "wasted_fraction": 0.28,
+        "best_feasible_obj": 6622.155394834095,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 141.49519038200378
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 6,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 1,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 7163.586771399166,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 135.22352695465088
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 7,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 1,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 4433.233289526326,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 224.72573113441467
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 8,
+        "budget": 25,
+        "n_crashes": 5,
+        "n_infeasible": 1,
+        "n_feasible": 19,
+        "wasted_fraction": 0.24,
+        "best_feasible_obj": 5114.87366987382,
+        "time_to_first_feasible": 2,
+        "wall_clock_s": 136.35422778129578
+      },
+      {
+        "optimizer": "tpe",
+        "seed": 9,
+        "budget": 25,
+        "n_crashes": 4,
+        "n_infeasible": 1,
+        "n_feasible": 20,
+        "wasted_fraction": 0.2,
+        "best_feasible_obj": 4517.967424509082,
+        "time_to_first_feasible": 1,
+        "wall_clock_s": 122.52954840660095
+      }
+    ]
+  },
+  "best_configs": {
+    "tba_tpe": [
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "torch_compile",
+        "quantization": "fp32",
+        "batch_size": 16
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 5,
+        "num_threads": 4
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp32",
+        "batch_size": 6
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 32
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 11,
+        "num_threads": 2
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 31
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 10,
+        "num_threads": 3
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 17,
+        "num_threads": 1
+      },
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 26,
+        "num_threads": 3
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 16,
+        "num_threads": 5
+      }
+    ],
+    "tba_sa": [
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 28
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 9,
+        "num_threads": 8
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 12,
+        "num_threads": 3
+      },
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "int8_dynamic",
+        "batch_size": 8,
+        "num_threads": 8
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 32
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp32",
+        "batch_size": 9
+      },
+      {
+        "model_name": "vit_tiny",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 18,
+        "num_threads": 2
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 8,
+        "num_threads": 2
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 8,
+        "num_threads": 3
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 16,
+        "num_threads": 1
+      }
+    ],
+    "random": [
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 16,
+        "num_threads": 1
+      },
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 16,
+        "num_threads": 2
+      },
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 32
+      },
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 32,
+        "num_threads": 7
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp32",
+        "batch_size": 32
+      },
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 32,
+        "num_threads": 2
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 16
+      },
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 8,
+        "num_threads": 2
+      },
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 16,
+        "num_threads": 2
+      },
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 32,
+        "num_threads": 7
+      }
+    ],
+    "tpe": [
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 10
+      },
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 17,
+        "num_threads": 6
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp32",
+        "batch_size": 9
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 22,
+        "num_threads": 6
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 24,
+        "num_threads": 1
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "torch_compile",
+        "quantization": "fp16",
+        "batch_size": 17
+      },
+      {
+        "model_name": "resnet18",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 32,
+        "num_threads": 4
+      },
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 14,
+        "num_threads": 3
+      },
+      {
+        "model_name": "efficientnet_b0",
+        "backend": "pytorch_eager",
+        "quantization": "fp16",
+        "batch_size": 32,
+        "num_threads": 8
+      },
+      {
+        "model_name": "mobilenet_v2",
+        "backend": "pytorch_eager",
+        "quantization": "fp32",
+        "batch_size": 17,
+        "num_threads": 3
+      }
+    ]
+  }
+}
