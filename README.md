@@ -106,9 +106,10 @@ If you use TBA in your research, please cite:
 
 ```
 @software{tba2026,
+  author={Christian Lysenstøen},
   title={Thermal Budget Annealing: Crash-Aware Deployment Optimization for ML Models},
   year={2026},
-  url={https://github.com/[your-username]/thermal-budget-annealing}
+  url={https://github.com/Chrislysen/Constrained-ML-Deployment}
 }
 ```
 
