@@ -100,6 +100,17 @@ PYTHONPATH=. python experiments/run_deployment.py --scenarios edge_tight server_
 PYTHONPATH=. python experiments/generate_figures.py
 ```
 
+## Tested Platforms
+
+| GPU | Environment | Notes |
+|-----|-------------|-------|
+| NVIDIA H100 | Google Colab | |
+| NVIDIA A100 | Google Colab | |
+| NVIDIA RTX 5080 | Windows, CUDA 12.8 | |
+| NVIDIA L4 | Google Colab | |
+| NVIDIA T4 | Google Colab | |
+| Apple M1 Max | macOS, CPU-only | 64 GB RAM |
+
 ## Citation
 
 If you use TBA in your research, please cite:

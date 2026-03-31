@@ -13,6 +13,8 @@ import time
 from dataclasses import asdict
 from pathlib import Path
 
+import numpy as np
+
 from tba.types import EvalResult
 from tba.optimizer.search_space import SearchSpace
 from tba.optimizer.tba_optimizer import TBAOptimizer
@@ -20,6 +22,15 @@ from tba.baselines.random_search import RandomSearchOptimizer
 from tba.baselines.optuna_tpe import OptunaTPEOptimizer
 from tba.baselines.constrained_bo import ConstrainedBOOptimizer
 from tba.benchmarks.synthetic_bench import BENCHMARKS
+
+
+class _NumpyEncoder(json.JSONEncoder):
+    def default(self, obj):
+        if isinstance(obj, (np.integer,)): return int(obj)
+        if isinstance(obj, (np.floating,)): return float(obj)
+        if isinstance(obj, (np.bool_,)): return bool(obj)
+        if isinstance(obj, np.ndarray): return obj.tolist()
+        return super().default(obj)
 
 
 # ------------------------------------------------------------------
@@ -107,7 +118,7 @@ def run_single(
     out_file = out_dir / f"seed_{seed}.jsonl"
     with open(out_file, "w") as f:
         for rec in records:
-            f.write(json.dumps(rec) + "\n")
+            f.write(json.dumps(rec, cls=_NumpyEncoder) + "\n")
 
     return records
 
@@ -208,7 +219,7 @@ def main():
     summary_file = results_dir / args.benchmark / "summary.json"
     summary_file.parent.mkdir(parents=True, exist_ok=True)
     with open(summary_file, "w") as f:
-        json.dump(all_summaries, f, indent=2)
+        json.dump(all_summaries, f, indent=2, cls=_NumpyEncoder)
     print(f"\nDetailed results saved to {results_dir}/{args.benchmark}/")
 
     # Generate plots
