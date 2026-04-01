@@ -60,12 +60,17 @@ class SearchSpace:
         temperature: float,
         p_structural: float = 0.3,
         rng: random.Random | None = None,
+        allowed_values: dict[str, list[Any]] | None = None,
     ) -> dict[str, Any]:
         """Propose a neighboring configuration.
 
         With probability *p_structural*, mutate a categorical/structural variable
         (which may activate/deactivate others). Otherwise mutate a numeric variable
         with step size proportional to temperature.
+
+        Args:
+            allowed_values: Optional dict from variable name to list of allowed
+                categorical values. Used by SubspaceTracker to exclude blacklisted values.
         """
         rng = rng or random.Random()
         neighbor = deepcopy(config)
@@ -81,7 +86,10 @@ class SearchSpace:
             # Mutate a structural variable
             name = rng.choice(structural)
             v = self.variables[name]
-            other_choices = [c for c in v.choices if c != config.get(name)]
+            choices = v.choices
+            if allowed_values and name in allowed_values:
+                choices = allowed_values[name]
+            other_choices = [c for c in choices if c != config.get(name)]
             if other_choices:
                 neighbor[name] = rng.choice(other_choices)
             # Re-resolve hierarchy: drop vars no longer active, sample newly active

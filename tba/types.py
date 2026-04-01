@@ -15,6 +15,7 @@ class EvalResult:
     crashed: bool = False
     eval_time_s: float = 0.0
     error_msg: str | None = None
+    early_stopped: bool = False
 
 
 @dataclass

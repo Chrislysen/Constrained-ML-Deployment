@@ -86,6 +86,8 @@ def run_single(opt_name, scenario_name, seed, objective_type):
     records = []
     cumulative_crashes = 0
     cumulative_infeasible = 0
+    cumulative_early_stopped = 0
+    time_saved_by_early_stop = 0.0
     best_feasible_so_far = None
     best_config_so_far = None
     wall_start = time.time()
@@ -110,6 +112,13 @@ def run_single(opt_name, scenario_name, seed, objective_type):
         else:
             status = "OK"
 
+        if result.early_stopped:
+            cumulative_early_stopped += 1
+            status = "ESTOP"
+            # Estimate time saved: a full eval typically takes ~10-30s on slow configs,
+            # early stop cuts it to eval_time_s. Conservative estimate: saved ~10s.
+            time_saved_by_early_stop += max(0, 10.0 - result.eval_time_s)
+
         bf = opt.best_feasible()
         if bf is not None:
             best_feasible_so_far = bf[1].objective_value
@@ -122,11 +131,20 @@ def run_single(opt_name, scenario_name, seed, objective_type):
         mem = result.constraints.get("memory_peak_mb", 0)
         tput = result.constraints.get("throughput_qps", 0)
 
+        # Get blacklisted subspaces if available
+        blacklisted = []
+        tracker = getattr(opt, "_tracker", None)
+        if tracker is not None:
+            blacklisted = tracker.blacklisted
+
         cs = config_str(config)
         best_str = f"{best_feasible_so_far:.4f}" if best_feasible_so_far else "N/A"
+        es_tag = " [EARLY-STOP]" if result.early_stopped else ""
+        bl_tag = f" BL={blacklisted}" if blacklisted else ""
         print(f"    [{opt_name:>7}] t{trial_id:2d} {cs:<50} {status:<6} "
               f"obj={obj_val:.3f} p95={lat95:.1f} p99={lat99:.1f} mem={mem:.0f} "
-              f"tput={tput:.0f}  best={best_str} [{result.eval_time_s:.1f}s]")
+              f"tput={tput:.0f}  best={best_str} [{result.eval_time_s:.1f}s]"
+              f"{es_tag}{bl_tag}")
 
         records.append({
             "trial_id": trial_id,
@@ -135,8 +153,15 @@ def run_single(opt_name, scenario_name, seed, objective_type):
             "best_feasible_so_far": best_feasible_so_far,
             "cumulative_crashes": cumulative_crashes,
             "cumulative_infeasible": cumulative_infeasible,
+            "early_stopped": result.early_stopped,
+            "blacklisted_subspaces": blacklisted,
             "wall_clock_s": wall,
         })
+
+    # Summary stats for v2 features
+    if cumulative_early_stopped > 0:
+        print(f"    >> Trials early-stopped: {cumulative_early_stopped}, "
+              f"Time saved by early stopping: ~{time_saved_by_early_stop:.0f}s")
 
     # Save JSONL
     out_dir = RESULTS_DIR / scenario_name / opt_name

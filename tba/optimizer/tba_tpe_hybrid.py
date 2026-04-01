@@ -26,6 +26,7 @@ from optuna.trial import create_trial
 from tba.types import EvalResult, VariableDef
 from tba.optimizer.base import BaseOptimizer
 from tba.optimizer.search_space import SearchSpace
+from tba.optimizer.subspace_tracker import SubspaceTracker
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
@@ -51,6 +52,10 @@ class TBATPEHybrid(BaseOptimizer):
         p_structural_start: float = 0.5,
         p_structural_end: float = 0.25,
         n_initial_random: int = 3,
+        # Subspace blacklisting (Phase 1 only)
+        enable_blacklisting: bool = True,
+        max_consecutive_failures: int = 3,
+        cooldown_trials: int = 8,
     ):
         super().__init__(search_space, constraints, objective, budget, seed)
         self.rng = random.Random(seed)
@@ -70,6 +75,20 @@ class TBATPEHybrid(BaseOptimizer):
         self._current_objective: float = float("-inf")
         self._found_feasible = False
         self._tba_phase = "feasibility"  # or "optimization"
+
+        # Subspace blacklisting (Phase 1 SA only)
+        self._enable_blacklisting = enable_blacklisting
+        self._tracker: SubspaceTracker | None = None
+        if enable_blacklisting:
+            cat_names = [
+                v.name for v in search_space.variables.values()
+                if v.var_type == "categorical"
+            ]
+            self._tracker = SubspaceTracker(
+                categorical_names=cat_names,
+                max_consecutive_failures=max_consecutive_failures,
+                cooldown_trials=cooldown_trials,
+            )
 
         # Adaptive handoff: hand off when enough feasible + crash data
         self._min_tba_trials = 5
@@ -126,6 +145,18 @@ class TBATPEHybrid(BaseOptimizer):
     # Phase 1: TBA feasible-first
     # ------------------------------------------------------------------
 
+    def _get_allowed_values(self) -> dict[str, list[Any]] | None:
+        """Build allowed_values dict from the SubspaceTracker."""
+        if not self._enable_blacklisting or self._tracker is None:
+            return None
+        allowed = {}
+        for name, v in self.search_space.variables.items():
+            if v.var_type == "categorical":
+                allowed[name] = self._tracker.get_allowed_values(
+                    name, v.choices, self.trial_count,
+                )
+        return allowed
+
     def _tba_ask(self) -> dict[str, Any]:
         if self.trial_count < self.n_initial_random:
             return self.search_space.sample_random(self.rng)
@@ -142,6 +173,7 @@ class TBATPEHybrid(BaseOptimizer):
             temperature=self._T,
             p_structural=self._p_structural,
             rng=self.rng,
+            allowed_values=self._get_allowed_values(),
         )
 
     def _init_tba_from_history(self) -> None:
@@ -311,6 +343,16 @@ class TBATPEHybrid(BaseOptimizer):
         self._pending_trial = None
 
     def _tba_tell(self, config: dict[str, Any], result: EvalResult) -> None:
+        # Record with subspace tracker (even during initial random)
+        if self._tracker is not None:
+            if result.crashed:
+                status = "crash"
+            elif not result.feasible:
+                status = "infeasible"
+            else:
+                status = "ok"
+            self._tracker.record_result(config, status, self.trial_count)
+
         # During initial random, just collect
         if self.trial_count <= self.n_initial_random:
             return

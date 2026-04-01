@@ -31,6 +31,10 @@ _VAL_SUBSET_SIZE = 500
 _WARMUP_ITERS = 30
 _BENCH_ITERS = 100
 
+# Early-stop defaults: abort warmup if latency exceeds multiplier * constraint
+EARLY_STOP_MULTIPLIER = 5
+EARLY_STOP_WARMUP_ITERS = 3
+
 
 def _get_val_loader(data_dir: str, batch_size: int, input_size: int = 224):
     """Load ImageNette validation set."""
@@ -134,8 +138,15 @@ def _prepare_backend(
 def _benchmark_latency(
     model_or_session, is_onnx: bool, batch_size: int,
     input_size: int, device: str, quant: str,
-) -> dict[str, float]:
-    """Measure latency over multiple iterations."""
+    latency_constraint_ms: float | None = None,
+    early_stop_multiplier: float = EARLY_STOP_MULTIPLIER,
+    early_stop_warmup_iters: int = EARLY_STOP_WARMUP_ITERS,
+) -> tuple[dict[str, float], bool]:
+    """Measure latency over multiple iterations.
+
+    Returns (latency_dict, early_stopped). If early_stopped is True,
+    the latency dict contains partial warmup estimates.
+    """
     dummy = torch.randn(batch_size, 3, input_size, input_size, device=device)
     if quant == "fp16":
         dummy = dummy.half()
@@ -144,28 +155,53 @@ def _benchmark_latency(
         device = "cpu"
 
     latencies = []
+    early_stop_threshold = None
+    if latency_constraint_ms is not None:
+        early_stop_threshold = early_stop_multiplier * latency_constraint_ms
 
     if is_onnx:
         import onnxruntime as ort
         dummy_np = dummy.cpu().numpy()
-
-        # Warmup
         input_name = model_or_session.get_inputs()[0].name
-        for _ in range(_WARMUP_ITERS):
+
+        # Warmup with early-stop check
+        warmup_start = time.perf_counter()
+        for i in range(_WARMUP_ITERS):
             model_or_session.run(None, {input_name: dummy_np})
+            if (early_stop_threshold is not None
+                    and i == early_stop_warmup_iters - 1):
+                elapsed_per_iter = (time.perf_counter() - warmup_start) / (i + 1) * 1000
+                if elapsed_per_iter > early_stop_threshold:
+                    return {
+                        "latency_p50_ms": elapsed_per_iter,
+                        "latency_p95_ms": elapsed_per_iter,
+                        "latency_p99_ms": elapsed_per_iter,
+                        "throughput_qps": float(batch_size * 1000.0 / elapsed_per_iter),
+                    }, True
 
         # Benchmark
         for _ in range(_BENCH_ITERS):
             t0 = time.perf_counter()
             model_or_session.run(None, {input_name: dummy_np})
-            latencies.append((time.perf_counter() - t0) * 1000)  # ms
+            latencies.append((time.perf_counter() - t0) * 1000)
     else:
-        # Warmup
+        # Warmup with early-stop check
+        warmup_start = time.perf_counter()
         with torch.no_grad():
-            for _ in range(_WARMUP_ITERS):
+            for i in range(_WARMUP_ITERS):
                 model_or_session(dummy)
                 if device == "cuda":
                     torch.cuda.synchronize()
+                if (early_stop_threshold is not None
+                        and i == early_stop_warmup_iters - 1):
+                    elapsed_per_iter = (time.perf_counter() - warmup_start) / (i + 1) * 1000
+                    if elapsed_per_iter > early_stop_threshold:
+                        return {
+                            "latency_p50_ms": elapsed_per_iter,
+                            "latency_p95_ms": elapsed_per_iter,
+                            "latency_p99_ms": elapsed_per_iter,
+                            "throughput_qps": float(batch_size * 1000.0 / elapsed_per_iter),
+                        }, True
 
         # Benchmark
         with torch.no_grad():
@@ -184,7 +220,7 @@ def _benchmark_latency(
         "latency_p95_ms": float(np.percentile(arr, 95)),
         "latency_p99_ms": float(np.percentile(arr, 99)),
         "throughput_qps": float(batch_size * 1000.0 / np.mean(arr)),
-    }
+    }, False
 
 
 def _measure_accuracy(
@@ -243,6 +279,9 @@ def evaluate_config(
     data_dir: str,
     device: str = "cuda",
     constraint_caps: dict[str, float] | None = None,
+    enable_early_stop: bool = True,
+    early_stop_multiplier: float = EARLY_STOP_MULTIPLIER,
+    early_stop_warmup_iters: int = EARLY_STOP_WARMUP_ITERS,
 ) -> EvalResult:
     """Evaluate a deployment config. NEVER crashes the experiment runner.
 
@@ -250,7 +289,7 @@ def evaluate_config(
       1. Load model
       2. Apply quantization
       3. Prepare backend (compile, export to ONNX, etc.)
-      4. Warmup + benchmark latency
+      4. Warmup + benchmark latency (with optional early stop)
       5. Measure accuracy on validation subset
       6. Record peak memory
       7. Return result
@@ -277,6 +316,16 @@ def evaluate_config(
         if quant == "int8_dynamic":
             actual_device = "cpu"  # int8 dynamic is CPU-only
 
+        # Extract latency constraint for early stopping
+        latency_constraint_ms = None
+        if enable_early_stop and constraint_caps:
+            # Use the tightest latency constraint available
+            for key in ("latency_p95_ms", "latency_p99_ms"):
+                if key in constraint_caps:
+                    cap = constraint_caps[key]
+                    if latency_constraint_ms is None or cap < latency_constraint_ms:
+                        latency_constraint_ms = cap
+
         # 1. Load model
         model = load_model(model_name)
 
@@ -286,10 +335,31 @@ def evaluate_config(
         # 3. Prepare backend
         model_or_session, is_onnx = _prepare_backend(model, config, actual_device, input_size)
 
-        # 4. Benchmark latency
-        latency_results = _benchmark_latency(
+        # 4. Benchmark latency (with early-stop support)
+        latency_results, early_stopped = _benchmark_latency(
             model_or_session, is_onnx, batch_size, input_size, actual_device, quant,
+            latency_constraint_ms=latency_constraint_ms,
+            early_stop_multiplier=early_stop_multiplier,
+            early_stop_warmup_iters=early_stop_warmup_iters,
         )
+
+        if early_stopped:
+            # This config will never meet constraints — skip accuracy measurement
+            result.objective_value = 0.0
+            result.constraints = {
+                "latency_p95_ms": latency_results["latency_p95_ms"],
+                "latency_p99_ms": latency_results["latency_p99_ms"],
+                "memory_peak_mb": _measure_peak_memory(actual_device),
+                "throughput_qps": latency_results["throughput_qps"],
+            }
+            result.feasible = False
+            result.crashed = False
+            result.early_stopped = True
+
+            del model_or_session
+            if not is_onnx:
+                del model
+            return result
 
         # 5. Measure accuracy
         accuracy = _measure_accuracy(
