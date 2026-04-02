@@ -56,6 +56,8 @@ class TBATPEHybrid(BaseOptimizer):
         enable_blacklisting: bool = True,
         max_consecutive_failures: int = 3,
         cooldown_trials: int = 8,
+        # Diversity-gated handoff (v3)
+        min_family_diversity: int = 3,
     ):
         super().__init__(search_space, constraints, objective, budget, seed)
         self.rng = random.Random(seed)
@@ -90,11 +92,12 @@ class TBATPEHybrid(BaseOptimizer):
                 cooldown_trials=cooldown_trials,
             )
 
-        # Adaptive handoff: hand off when enough feasible + crash data
+        # Adaptive handoff: hand off when enough feasible + crash data + diversity
         self._min_tba_trials = 5
         self._max_tba_trials = 15
         self._min_feasible_for_handoff = 5
         self._min_bad_for_handoff = 3  # crashed + infeasible
+        self._min_family_diversity = min_family_diversity
         self._in_tpe_phase = False
 
         # Phase 2: Optuna (created at handoff)
@@ -113,15 +116,23 @@ class TBATPEHybrid(BaseOptimizer):
         return self._p_struct_start + (self._p_struct_end - self._p_struct_start) * progress
 
     def _should_handoff(self) -> bool:
-        """Adaptive handoff: need enough feasible AND crash/infeasible data for TPE."""
+        """Adaptive handoff: need enough feasible + crash data + model family diversity.
+
+        The diversity gate (v3) ensures Phase 1 explores at least
+        ``min_family_diversity`` distinct model families before handing off,
+        preventing premature exploitation of whichever family was discovered
+        first.  The hard max (n_max=15) still forces handoff regardless.
+        """
         if self.trial_count < self._min_tba_trials:
             return False
         if self.trial_count >= self._max_tba_trials:
-            return True  # force handoff at max
+            return True  # safety valve: force handoff at max
         n_feasible = sum(1 for _, r in self.history if r.feasible and not r.crashed)
         n_bad = sum(1 for _, r in self.history if r.crashed or not r.feasible)
+        n_families = len({c.get("model_name") for c, _ in self.history if "model_name" in c})
         return (n_feasible >= self._min_feasible_for_handoff
-                and n_bad >= self._min_bad_for_handoff)
+                and n_bad >= self._min_bad_for_handoff
+                and n_families >= self._min_family_diversity)
 
     # ------------------------------------------------------------------
     # ask
@@ -168,13 +179,22 @@ class TBATPEHybrid(BaseOptimizer):
         if self._current_config is None:
             return self.search_space.sample_random(self.rng)
 
-        return self.search_space.propose_neighbor(
-            self._current_config,
-            temperature=self._T,
-            p_structural=self._p_structural,
-            rng=self.rng,
-            allowed_values=self._get_allowed_values(),
-        )
+        allowed = self._get_allowed_values()
+        # Propose neighbor, rejecting combo-blacklisted configs (v3)
+        max_retries = 10
+        for _ in range(max_retries):
+            candidate = self.search_space.propose_neighbor(
+                self._current_config,
+                temperature=self._T,
+                p_structural=self._p_structural,
+                rng=self.rng,
+                allowed_values=allowed,
+            )
+            if (self._tracker is None
+                    or not self._tracker.is_combo_blacklisted(candidate, self.trial_count)):
+                return candidate
+        # Exhausted retries — return last candidate rather than stalling
+        return candidate
 
     def _init_tba_from_history(self) -> None:
         best_feas_cfg, best_feas_obj = None, float("-inf")

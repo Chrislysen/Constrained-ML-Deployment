@@ -95,7 +95,10 @@ def run_single(opt_name, scenario_name, seed, objective_type):
     for trial_id in range(budget):
         config = opt.ask()
 
-        result = evaluate_config(config, DATA_DIR, device=DEVICE, constraint_caps=constraints)
+        result = evaluate_config(
+            config, DATA_DIR, device=DEVICE, constraint_caps=constraints,
+            has_feasible=(best_feasible_so_far is not None),
+        )
 
         # For throughput objective, override objective_value
         if objective_type == "maximize_throughput" and not result.crashed:

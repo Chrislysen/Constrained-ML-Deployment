@@ -32,7 +32,9 @@ _WARMUP_ITERS = 30
 _BENCH_ITERS = 100
 
 # Early-stop defaults: abort warmup if latency exceeds multiplier * constraint
-EARLY_STOP_MULTIPLIER = 5
+EARLY_STOP_MULTIPLIER_PREFEASIBLE = 5   # permissive before any feasible solution
+EARLY_STOP_MULTIPLIER_POSTFEASIBLE = 3  # tighter after feasibility is proven
+EARLY_STOP_MULTIPLIER = EARLY_STOP_MULTIPLIER_PREFEASIBLE  # backward-compat alias
 EARLY_STOP_WARMUP_ITERS = 3
 
 
@@ -280,8 +282,9 @@ def evaluate_config(
     device: str = "cuda",
     constraint_caps: dict[str, float] | None = None,
     enable_early_stop: bool = True,
-    early_stop_multiplier: float = EARLY_STOP_MULTIPLIER,
+    early_stop_multiplier: float | None = None,
     early_stop_warmup_iters: int = EARLY_STOP_WARMUP_ITERS,
+    has_feasible: bool = False,
 ) -> EvalResult:
     """Evaluate a deployment config. NEVER crashes the experiment runner.
 
@@ -294,8 +297,20 @@ def evaluate_config(
       6. Record peak memory
       7. Return result
 
+    Args:
+        has_feasible: If True, at least one feasible solution has already been
+            found.  The early-stop multiplier tightens from 5x to 3x (v3
+            adaptive timeout) unless an explicit ``early_stop_multiplier`` is
+            passed.
+
     All wrapped in try/except. GPU memory cleaned after every eval.
     """
+    # v3: adaptive timeout — tighter after feasibility proven
+    if early_stop_multiplier is None:
+        early_stop_multiplier = (
+            EARLY_STOP_MULTIPLIER_POSTFEASIBLE if has_feasible
+            else EARLY_STOP_MULTIPLIER_PREFEASIBLE
+        )
     start = time.time()
     result = EvalResult()
 

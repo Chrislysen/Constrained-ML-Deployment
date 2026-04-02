@@ -219,14 +219,21 @@ class TBAOptimizer(BaseOptimizer):
                     and len(feasible_hist) >= self.min_feasible_for_tpe):
                 return self._feasible_tpe_ask(feasible_hist)
 
-        # Fallback: annealing neighbor proposal
-        return self.search_space.propose_neighbor(
-            self._current_config,
-            temperature=self.temp.T,
-            p_structural=self._p_structural,
-            rng=self.rng,
-            allowed_values=self._get_allowed_values(),
-        )
+        # Fallback: annealing neighbor proposal with combo-blacklist filter (v3)
+        allowed = self._get_allowed_values()
+        max_retries = 10
+        for _ in range(max_retries):
+            candidate = self.search_space.propose_neighbor(
+                self._current_config,
+                temperature=self.temp.T,
+                p_structural=self._p_structural,
+                rng=self.rng,
+                allowed_values=allowed,
+            )
+            if (self._tracker is None
+                    or not self._tracker.is_combo_blacklisted(candidate, self.trial_count)):
+                return candidate
+        return candidate
 
     def _feasible_tpe_ask(self, feasible_hist: list[tuple[dict, EvalResult]]) -> dict[str, Any]:
         """Sample from feasible-region TPE, with RF feasibility filter."""

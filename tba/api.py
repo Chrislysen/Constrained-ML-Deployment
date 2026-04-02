@@ -68,7 +68,10 @@ def optimize_deployment(
     for trial_id in range(budget):
         config = optimizer.ask()
 
-        result = evaluate_config(config, data_dir, device=device, constraint_caps=constraints)
+        result = evaluate_config(
+            config, data_dir, device=device, constraint_caps=constraints,
+            has_feasible=(optimizer.best_feasible() is not None),
+        )
 
         # Override objective for throughput
         if objective == "maximize_throughput" and not result.crashed:
