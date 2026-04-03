@@ -4,16 +4,17 @@
 
 ![Edge Deployment Results](figures/fig3_deployment_edge_tight.png)
 
-Standard optimizers (TPE, Bayesian optimization, random search) waste 40-80% of their trial budget on configurations that crash, OOM, or violate deployment constraints. TBA-TPE Hybrid uses a two-phase strategy: Phase 1 runs crash-aware simulated annealing to map the feasible region in 5-15 trials, then Phase 2 warm-starts Optuna's TPE with all crash data so it optimizes within the safe region. On real ML deployment benchmarks (5 models x 3 backends x 3 quantization modes x 6 batch sizes), TBA-TPE finds the best feasible configuration in 25 trials while wasting 41% of budget, compared to TPE's 35% waste but lower accuracy (0.754 vs 0.761) because TPE gets stuck on suboptimal models it discovered early.
+Standard optimizers (TPE, Bayesian optimization, random search) waste 40-80% of their trial budget on configurations that crash, OOM, or violate deployment constraints. TBA-TPE Hybrid uses a two-phase strategy: Phase 1 runs crash-aware simulated annealing to map the feasible region in 5-15 trials, then Phase 2 warm-starts Optuna's TPE with all crash data so it optimizes within the safe region. On real ML deployment benchmarks (5 models x 3 backends x 3 quantization modes x 6 batch sizes), TBA-TPE finds the best feasible configuration in 25 trials while wasting 42% of budget, compared to TPE's 36% waste but lower accuracy (0.752 vs 0.761) because TPE gets stuck on suboptimal models it discovered early.
 
 ## Key Results
 
-| Scenario | TBA-TPE Hybrid | Optuna TPE | Random Search | TBA (pure SA) |
-|----------|---------------|------------|---------------|---------------|
-| **Edge (acc)** | **0.761 +- 0.010** | 0.754 +- 0.010 | 0.762 +- 0.008 | 0.755 +- 0.015 |
-| Edge (waste) | 41% | 35% | **77%** | **33%** |
-| **Server (QPS)** | 5087 +- 1787 | **5423 +- 1325** | 4758 +- 1399 | 4131 +- 2036 |
-| Server (waste) | 23% | 24% | 54% | **18%** |
+RTX 5080, edge_tight scenario (latency_p95 <= 20ms, memory <= 512MB), 10 seeds, 25 trials each:
+
+| Metric | TBA-TPE Hybrid | Optuna TPE | Random Search | TBA (pure SA) |
+|--------|---------------|------------|---------------|---------------|
+| **Accuracy** | **0.761 +- 0.010** | 0.752 +- 0.010 | 0.762 +- 0.008 | 0.752 +- 0.019 |
+| Waste % | 42% | 36% | 74% | 30% |
+| **vit_tiny discovery** | **8/10** | 3/10 | **8/10** | 6/10 |
 
 ![Budget Efficiency](figures/fig2_budget_sweep_wasted.png)
 
