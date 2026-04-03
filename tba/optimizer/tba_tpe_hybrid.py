@@ -180,20 +180,28 @@ class TBATPEHybrid(BaseOptimizer):
             return self.search_space.sample_random(self.rng)
 
         allowed = self._get_allowed_values()
-        # Propose neighbor, rejecting combo-blacklisted configs (v3)
-        max_retries = 10
-        for _ in range(max_retries):
-            candidate = self.search_space.propose_neighbor(
-                self._current_config,
-                temperature=self._T,
-                p_structural=self._p_structural,
-                rng=self.rng,
-                allowed_values=allowed,
-            )
-            if (self._tracker is None
-                    or not self._tracker.is_combo_blacklisted(candidate, self.trial_count)):
-                return candidate
-        # Exhausted retries — return last candidate rather than stalling
+        has_combo_blacklists = (
+            self._tracker is not None and self._tracker.combo_blacklisted
+        )
+        candidate = self.search_space.propose_neighbor(
+            self._current_config,
+            temperature=self._T,
+            p_structural=self._p_structural,
+            rng=self.rng,
+            allowed_values=allowed,
+        )
+        # Only retry if there are active combo blacklists (v3)
+        if has_combo_blacklists:
+            for _ in range(9):  # already proposed once
+                if not self._tracker.is_combo_blacklisted(candidate, self.trial_count):
+                    break
+                candidate = self.search_space.propose_neighbor(
+                    self._current_config,
+                    temperature=self._T,
+                    p_structural=self._p_structural,
+                    rng=self.rng,
+                    allowed_values=allowed,
+                )
         return candidate
 
     def _init_tba_from_history(self) -> None:

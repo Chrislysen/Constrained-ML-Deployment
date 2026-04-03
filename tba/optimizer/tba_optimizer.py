@@ -221,18 +221,27 @@ class TBAOptimizer(BaseOptimizer):
 
         # Fallback: annealing neighbor proposal with combo-blacklist filter (v3)
         allowed = self._get_allowed_values()
-        max_retries = 10
-        for _ in range(max_retries):
-            candidate = self.search_space.propose_neighbor(
-                self._current_config,
-                temperature=self.temp.T,
-                p_structural=self._p_structural,
-                rng=self.rng,
-                allowed_values=allowed,
-            )
-            if (self._tracker is None
-                    or not self._tracker.is_combo_blacklisted(candidate, self.trial_count)):
-                return candidate
+        has_combo_blacklists = (
+            self._tracker is not None and self._tracker.combo_blacklisted
+        )
+        candidate = self.search_space.propose_neighbor(
+            self._current_config,
+            temperature=self.temp.T,
+            p_structural=self._p_structural,
+            rng=self.rng,
+            allowed_values=allowed,
+        )
+        if has_combo_blacklists:
+            for _ in range(9):
+                if not self._tracker.is_combo_blacklisted(candidate, self.trial_count):
+                    break
+                candidate = self.search_space.propose_neighbor(
+                    self._current_config,
+                    temperature=self.temp.T,
+                    p_structural=self._p_structural,
+                    rng=self.rng,
+                    allowed_values=allowed,
+                )
         return candidate
 
     def _feasible_tpe_ask(self, feasible_hist: list[tuple[dict, EvalResult]]) -> dict[str, Any]:
