@@ -2,7 +2,7 @@
 
 **Crash-aware deployment optimization for ML models under hard constraints and tiny budgets.**
 
-![Edge Deployment Results](figures/fig3_deployment_edge_tight.png)
+![Discovery vs Waste](figures/fig_discovery_vs_waste.png)
 
 Standard optimizers (TPE, Bayesian optimization, random search) waste 40-80% of their trial budget on configurations that crash, OOM, or violate deployment constraints. TBA-TPE Hybrid uses a two-phase strategy: Phase 1 runs crash-aware simulated annealing to map the feasible region in 5-15 trials, then Phase 2 warm-starts Optuna's TPE with all crash data so it optimizes within the safe region. On real ML deployment benchmarks (5 models x 3 backends x 3 quantization modes x 6 batch sizes), TBA-TPE finds the best feasible configuration in 25 trials while wasting 42% of budget, compared to TPE's 36% waste but lower accuracy (0.752 vs 0.761) because TPE gets stuck on suboptimal models it discovered early.
 
