@@ -124,14 +124,14 @@ PYTHONPATH=. python experiments/generate_figures.py
 - TPE warm-start handoff
 - DeployBench benchmark suite
 - Experiments on RTX 5080 (10 seeds)
-- **Paper:** [v1 PDF](paper/tba_paper_v1.pdf) — single-GPU results
+- **Paper:** [v1 PDF](ConstrainedML_deployment.pdf) — single-GPU results
 
 ### v2 (April 2026)
 - Trial timeouts: abort evaluations when latency > 5x constraint after warmup
 - Subspace blacklisting: temporarily suppress categorical values after 3 consecutive failures
 - Multi-GPU experiments: H100, A100, RTX 5080, L4, T4
 - 31/31 tests passing
-- **Paper:** [v2 PDF](paper/tba_paper_v2.pdf) — multi-GPU results, softened claims
+- **Paper:** [v2 PDF](ConstrainedML_deployment_v2.pdf) — multi-GPU results, softened claims
 
 ### v3 (April 2026)
 - Diversity-gated handoff: Phase 1 must explore >=3 model families before handing off to TPE
@@ -145,8 +145,8 @@ PYTHONPATH=. python experiments/generate_figures.py
 
 Christian Lysenstoen, UC Berkeley, April 2026
 
-- [v1 paper (single-GPU results)](paper/tba_paper_v1.pdf)
-- [v2 paper (multi-GPU results)](paper/tba_paper_v2.pdf)
+- [v1 paper (single-GPU results)](ConstrainedML_deployment.pdf)
+- [v2 paper (multi-GPU results)](ConstrainedML_deployment_v2.pdf)
 - arXiv link: *coming soon*
 
 The paper studies budget-constrained deployment optimization in partially invalid hierarchical search spaces. The main finding is that explicit feasible-first exploration improves model-family discovery under tight constraints compared to cold-start TPE, with the hybrid discovering vit_tiny in 8/10 seeds versus TPE's 3/10 on RTX 5080.

@@ -1,6 +1,6 @@
 # Paper
 
-PDF versions of the paper will be added here after Overleaf compilation.
+PDF versions of the paper are in the repo root:
 
-- `tba_paper_v1.pdf` — Original single-GPU results
-- `tba_paper_v2.pdf` — Multi-GPU results with trial timeouts and subspace blacklisting
+- `ConstrainedML_deployment.pdf` — v1: Original single-GPU results
+- `ConstrainedML_deployment_v2.pdf` — v2: Multi-GPU results with trial timeouts and subspace blacklisting
