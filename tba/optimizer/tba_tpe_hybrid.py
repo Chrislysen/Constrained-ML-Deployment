@@ -56,8 +56,8 @@ class TBATPEHybrid(BaseOptimizer):
         enable_blacklisting: bool = True,
         max_consecutive_failures: int = 3,
         cooldown_trials: int = 8,
-        # Diversity-gated handoff (v3)
-        min_family_diversity: int = 3,
+        # Diversity-gated handoff (v3) — opt-in, default matches v2 behavior
+        min_family_diversity: int = 1,
     ):
         super().__init__(search_space, constraints, objective, budget, seed)
         self.rng = random.Random(seed)

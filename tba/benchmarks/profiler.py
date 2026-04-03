@@ -33,7 +33,7 @@ _BENCH_ITERS = 100
 
 # Early-stop defaults: abort warmup if latency exceeds multiplier * constraint
 EARLY_STOP_MULTIPLIER_PREFEASIBLE = 5   # permissive before any feasible solution
-EARLY_STOP_MULTIPLIER_POSTFEASIBLE = 3  # tighter after feasibility is proven
+EARLY_STOP_MULTIPLIER_POSTFEASIBLE = 5  # set to 3 to enable adaptive timeout (v3)
 EARLY_STOP_MULTIPLIER = EARLY_STOP_MULTIPLIER_PREFEASIBLE  # backward-compat alias
 EARLY_STOP_WARMUP_ITERS = 3
 
