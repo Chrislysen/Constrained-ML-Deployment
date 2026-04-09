@@ -1,0 +1,3 @@
+# Additional dependencies for boundary probe experiment
+# Core deps (torch, torchvision, numpy, matplotlib) already in project
+scipy

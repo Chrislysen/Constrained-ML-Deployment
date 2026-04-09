@@ -1,0 +1,27 @@
+{
+  "description": "High-repeat probe of confirmed flippers (mobilenet_v2/int8_dynamic)",
+  "latency_threshold_ms": 20.0,
+  "memory_cap_mb": 512.0,
+  "total_candidates_scanned": 2,
+  "total_selected": 2,
+  "configs": [
+    {
+      "model": "mobilenet_v2",
+      "backend": "pytorch_eager",
+      "quantization": "int8_dynamic",
+      "batch_size": 3,
+      "zone": "NEAR_FEASIBLE",
+      "median_p95_latency_ms": 18.68,
+      "observed_flip": true
+    },
+    {
+      "model": "mobilenet_v2",
+      "backend": "pytorch_eager",
+      "quantization": "int8_dynamic",
+      "batch_size": 4,
+      "zone": "NEAR_INFEASIBLE",
+      "median_p95_latency_ms": 21.94,
+      "observed_flip": true
+    }
+  ]
+}

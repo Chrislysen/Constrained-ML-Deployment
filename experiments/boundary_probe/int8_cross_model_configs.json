@@ -1,0 +1,36 @@
+{
+  "description": "Cross-model int8_dynamic probe: is the stochasticity specific to mobilenet_v2 or inherent to int8_dynamic?",
+  "latency_threshold_ms": 20.0,
+  "memory_cap_mb": 512.0,
+  "total_candidates_scanned": 3,
+  "total_selected": 3,
+  "configs": [
+    {
+      "model": "efficientnet_b0",
+      "backend": "pytorch_eager",
+      "quantization": "int8_dynamic",
+      "batch_size": 1,
+      "zone": "GRAY_ZONE",
+      "median_p95_latency_ms": 19.2,
+      "observed_flip": true
+    },
+    {
+      "model": "efficientnet_b0",
+      "backend": "pytorch_eager",
+      "quantization": "int8_dynamic",
+      "batch_size": 2,
+      "zone": "NEAR_INFEASIBLE",
+      "median_p95_latency_ms": 26.43,
+      "observed_flip": true
+    },
+    {
+      "model": "resnet18",
+      "backend": "pytorch_eager",
+      "quantization": "int8_dynamic",
+      "batch_size": 1,
+      "zone": "NEAR_FEASIBLE",
+      "median_p95_latency_ms": 17.2,
+      "observed_flip": true
+    }
+  ]
+}

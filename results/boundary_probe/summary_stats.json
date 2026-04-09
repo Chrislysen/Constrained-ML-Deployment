@@ -1,0 +1,30 @@
+{
+  "total_configs": 20,
+  "total_repeats": 1600,
+  "configs_any_instability": 4,
+  "configs_meaningful_instability_gt10pct": 2,
+  "configs_strong_instability_gt30pct": 1,
+  "gray_zone_width_ms": 4.327,
+  "gray_zone_range_ms": [
+    -0.692,
+    3.635
+  ],
+  "per_model_gray_zone_width_ms": {
+    "efficientnet_b0": 0.0,
+    "mobilenet_v2": 4.327,
+    "resnet18": 0.0,
+    "resnet50": 0.0,
+    "vit_tiny": 0.0
+  },
+  "temp_correlation_pearson_r": 0.4423,
+  "temp_correlation_p_value": 0.0,
+  "cold_mean_p95_ms": 16.498,
+  "warm_mean_p95_ms": 16.385,
+  "cold_warm_diff_ms": 0.113,
+  "cold_flip_rate": 0.0975,
+  "warm_flip_rate": 0.0988,
+  "near_threshold_configs": 11,
+  "near_threshold_with_flips_gt10pct": 2,
+  "near_threshold_fraction_flipping": 0.1818,
+  "heterogeneity_detected": false
+}
