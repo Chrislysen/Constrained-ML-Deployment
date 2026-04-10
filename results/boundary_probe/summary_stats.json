@@ -1,28 +1,197 @@
 {
   "total_configs": 20,
-  "total_repeats": 1600,
+  "total_repeats": 1800,
+  "gpu_configs_total": 15,
+  "cpu_configs_total": 5,
+  "gpu_configs_any_flips": 1,
+  "cpu_configs_any_flips": 3,
   "configs_any_instability": 4,
   "configs_meaningful_instability_gt10pct": 2,
   "configs_strong_instability_gt30pct": 1,
-  "gray_zone_width_ms": 4.327,
+  "gray_zone_width_ms": 4.099,
   "gray_zone_range_ms": [
-    -0.692,
-    3.635
+    -0.862,
+    3.237
   ],
   "per_model_gray_zone_width_ms": {
     "efficientnet_b0": 0.0,
-    "mobilenet_v2": 4.327,
+    "mobilenet_v2": 4.099,
     "resnet18": 0.0,
     "resnet50": 0.0,
     "vit_tiny": 0.0
   },
-  "temp_correlation_pearson_r": 0.4423,
-  "temp_correlation_p_value": 0.0,
-  "cold_mean_p95_ms": 16.498,
-  "warm_mean_p95_ms": 16.385,
-  "cold_warm_diff_ms": 0.113,
-  "cold_flip_rate": 0.0975,
-  "warm_flip_rate": 0.0988,
+  "gpu_temp_correlation_pearson_r": 0.6768,
+  "gpu_temp_correlation_p_value": 0.0,
+  "cpu_corr_source": "cpu_freq",
+  "cpu_corr_pearson_r": 0.7362,
+  "cpu_corr_p_value": 0.0,
+  "per_config_correlations": [
+    {
+      "config": "vit_tiny|pytorch_eager|fp16|24",
+      "exec_device": "gpu",
+      "pearson_r": -0.1984,
+      "p_value": 0.16713,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "vit_tiny|pytorch_eager|fp16|25",
+      "exec_device": "gpu",
+      "pearson_r": -0.526,
+      "p_value": 8.8e-05,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "mobilenet_v2|pytorch_eager|int8_dynamic|2",
+      "exec_device": "cpu",
+      "pearson_r": -0.4085,
+      "p_value": 0.003226,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "efficientnet_b0|pytorch_eager|fp16|7",
+      "exec_device": "gpu",
+      "pearson_r": 0.085,
+      "p_value": 0.557458,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "efficientnet_b0|pytorch_eager|int8_dynamic|1",
+      "exec_device": "cpu",
+      "pearson_r": -0.2167,
+      "p_value": 0.007721,
+      "n": 150,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "vit_tiny|pytorch_eager|fp16|23",
+      "exec_device": "gpu",
+      "pearson_r": 0.0201,
+      "p_value": 0.889827,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "efficientnet_b0|pytorch_eager|fp16|16",
+      "exec_device": "gpu",
+      "pearson_r": -0.1699,
+      "p_value": 0.238062,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "efficientnet_b0|pytorch_eager|fp32|18",
+      "exec_device": "gpu",
+      "pearson_r": -0.032,
+      "p_value": 0.825272,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "efficientnet_b0|pytorch_eager|fp16|1",
+      "exec_device": "gpu",
+      "pearson_r": 0.5195,
+      "p_value": 0.000111,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "efficientnet_b0|pytorch_eager|fp16|2",
+      "exec_device": "gpu",
+      "pearson_r": 0.0374,
+      "p_value": 0.796719,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "resnet18|pytorch_eager|int8_dynamic|1",
+      "exec_device": "cpu",
+      "pearson_r": 0.0948,
+      "p_value": 0.248343,
+      "n": 150,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "efficientnet_b0|pytorch_eager|fp16|32",
+      "exec_device": "gpu",
+      "pearson_r": -0.248,
+      "p_value": 0.082496,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "vit_tiny|pytorch_eager|fp16|28",
+      "exec_device": "gpu",
+      "pearson_r": -0.1333,
+      "p_value": 0.356196,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "vit_tiny|pytorch_eager|fp32|7",
+      "exec_device": "gpu",
+      "pearson_r": 0.2966,
+      "p_value": 0.036511,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "vit_tiny|pytorch_eager|fp16|30",
+      "exec_device": "gpu",
+      "pearson_r": 0.0353,
+      "p_value": 0.807485,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "vit_tiny|pytorch_eager|fp16|27",
+      "exec_device": "gpu",
+      "pearson_r": 0.1208,
+      "p_value": 0.403521,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "vit_tiny|pytorch_eager|fp16|31",
+      "exec_device": "gpu",
+      "pearson_r": -0.0862,
+      "p_value": 0.551529,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "resnet50|pytorch_eager|fp16|15",
+      "exec_device": "gpu",
+      "pearson_r": -0.1831,
+      "p_value": 0.203087,
+      "n": 50,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "mobilenet_v2|pytorch_eager|int8_dynamic|3",
+      "exec_device": "cpu",
+      "pearson_r": 0.2026,
+      "p_value": 0.000135,
+      "n": 350,
+      "temp_source": "gpu"
+    },
+    {
+      "config": "mobilenet_v2|pytorch_eager|int8_dynamic|4",
+      "exec_device": "cpu",
+      "pearson_r": 0.2273,
+      "p_value": 1.8e-05,
+      "n": 350,
+      "temp_source": "gpu"
+    }
+  ],
+  "cold_mean_p95_ms": 17.03,
+  "warm_mean_p95_ms": 16.921,
+  "cold_warm_diff_ms": 0.108,
+  "cold_flip_rate": 0.1233,
+  "warm_flip_rate": 0.1256,
   "near_threshold_configs": 11,
   "near_threshold_with_flips_gt10pct": 2,
   "near_threshold_fraction_flipping": 0.1818,

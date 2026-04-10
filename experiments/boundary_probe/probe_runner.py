@@ -20,6 +20,7 @@ from pathlib import Path
 from typing import Any
 
 import numpy as np
+import psutil
 import torch
 import torch.nn as nn
 from torchvision import transforms, datasets
@@ -63,6 +64,38 @@ def get_gpu_state(gpu_id: int = 0) -> dict[str, Any]:
                 state["memory_used_mb"] = float(parts[2])
                 state["power_draw_w"] = float(parts[3])
     except (FileNotFoundError, subprocess.TimeoutExpired, ValueError):
+        pass
+    return state
+
+
+def get_cpu_state() -> dict[str, Any]:
+    """Query CPU state via psutil. Returns dict with temp, frequency, utilization."""
+    state = {
+        "cpu_temp_c": None,
+        "cpu_freq_mhz": None,
+        "cpu_percent": None,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
+    try:
+        freq = psutil.cpu_freq()
+        if freq is not None:
+            state["cpu_freq_mhz"] = round(freq.current, 1)
+    except Exception:
+        pass
+    try:
+        state["cpu_percent"] = psutil.cpu_percent(interval=None)
+    except Exception:
+        pass
+    try:
+        temps = psutil.sensors_temperatures()
+        if temps:
+            # Use first available sensor's current reading
+            for name, entries in temps.items():
+                if entries:
+                    state["cpu_temp_c"] = entries[0].current
+                    break
+    except (AttributeError, Exception):
+        # sensors_temperatures() not available on all platforms (e.g. Windows)
         pass
     return state
 
@@ -303,6 +336,7 @@ def probe_config(
             torch.cuda.synchronize()
 
         gpu_state = get_gpu_state(gpu_id)
+        cpu_state = get_cpu_state() if quant == "int8_dynamic" else None
 
         # Handle load failure
         if load_error is not None:
@@ -311,6 +345,7 @@ def probe_config(
                 "repeat_index": repeat_idx,
                 "condition": condition,
                 "gpu_state": gpu_state,
+                "cpu_state": cpu_state,
                 "warmup_passes": warmup_passes,
                 "measurement_passes": measurement_passes,
                 "latencies_ms": [],
@@ -370,6 +405,7 @@ def probe_config(
             "repeat_index": repeat_idx,
             "condition": condition,
             "gpu_state": gpu_state,
+            "cpu_state": cpu_state,
             "warmup_passes": warmup_passes,
             "measurement_passes": measurement_passes,
             "latencies_ms": [round(l, 4) for l in latencies],
@@ -624,12 +660,14 @@ def main():
                 stderr_tail = (result.stderr or "")[-500:]
                 if stderr_tail:
                     crash_reason += f": {stderr_tail}"
+                cpu_state = get_cpu_state() if config.get("quantization") == "int8_dynamic" else None
                 for repeat_idx in range(args.repeats):
                     rec = {
                         "config": config,
                         "repeat_index": repeat_idx,
                         "condition": "cold" if repeat_idx % 2 == 0 else "warm",
                         "gpu_state": gpu_state,
+                        "cpu_state": cpu_state,
                         "warmup_passes": args.warmup_passes,
                         "measurement_passes": args.measurement_passes,
                         "latencies_ms": [],

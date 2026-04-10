@@ -27,6 +27,14 @@ from scipy import stats
 
 LATENCY_THRESHOLD_MS = 20.0
 
+# Quantization types that run on CPU (everything else runs on GPU/CUDA)
+CPU_QUANT_TYPES = {"int8_dynamic"}
+
+
+def execution_device(quant: str) -> str:
+    """Return 'cpu' or 'gpu' based on quantization type."""
+    return "cpu" if quant in CPU_QUANT_TYPES else "gpu"
+
 # Zone classification (same as selector)
 ZONES = {
     "DEEP_FEASIBLE":   (0.0,  15.0),
@@ -122,12 +130,43 @@ def compute_config_stats(groups: dict[str, list[dict]]) -> list[dict]:
 
         zone = classify_zone(median_p95)
 
+        # Execution device
+        exec_device = execution_device(quant)
+
         # GPU temperatures
-        temps = [
+        gpu_temps = [
             r["gpu_state"]["temperature_c"]
             for r in valid
             if r["gpu_state"].get("temperature_c") is not None
         ]
+
+        # CPU state (only present for int8_dynamic configs from updated runner)
+        cpu_freqs = []
+        cpu_pcts = []
+        cpu_temps = []
+        for r in valid:
+            cs = r.get("cpu_state")
+            if cs:
+                if cs.get("cpu_freq_mhz") is not None:
+                    cpu_freqs.append(cs["cpu_freq_mhz"])
+                if cs.get("cpu_percent") is not None:
+                    cpu_pcts.append(cs["cpu_percent"])
+                if cs.get("cpu_temp_c") is not None:
+                    cpu_temps.append(cs["cpu_temp_c"])
+
+        # Per-config temperature-latency correlation (>20 repeats)
+        per_config_temp_corr = None
+        if total > 20:
+            # Use the appropriate temperature for the execution device
+            temps_for_corr = cpu_temps if exec_device == "cpu" and cpu_temps else gpu_temps
+            if len(temps_for_corr) == len(p95_values) and len(temps_for_corr) > 2:
+                r_val, p_val = stats.pearsonr(temps_for_corr, p95_values)
+                per_config_temp_corr = {
+                    "pearson_r": round(float(r_val), 4),
+                    "p_value": round(float(p_val), 6),
+                    "n": len(temps_for_corr),
+                    "temp_source": "cpu" if (exec_device == "cpu" and cpu_temps) else "gpu",
+                }
 
         stat = {
             "key": key,
@@ -135,6 +174,7 @@ def compute_config_stats(groups: dict[str, list[dict]]) -> list[dict]:
             "backend": backend,
             "quantization": quant,
             "batch_size": int(batch_size),
+            "exec_device": exec_device,
             "zone": zone,
             "median_p95_ms": median_p95,
             "mean_p95_ms": float(np.mean(p95_values)),
@@ -152,8 +192,12 @@ def compute_config_stats(groups: dict[str, list[dict]]) -> list[dict]:
             "cold_total": len(cold_records),
             "warm_feasible": warm_feasible,
             "warm_total": len(warm_records),
-            "temperatures": temps,
+            "gpu_temperatures": gpu_temps,
+            "cpu_temperatures": cpu_temps,
+            "cpu_freqs": cpu_freqs,
+            "cpu_percents": cpu_pcts,
             "p95_values": p95_values,
+            "per_config_temp_corr": per_config_temp_corr,
         }
         config_stats.append(stat)
 
@@ -165,47 +209,58 @@ def compute_config_stats(groups: dict[str, list[dict]]) -> list[dict]:
 # ---------------------------------------------------------------------------
 
 def figure1_feasibility_vs_distance(config_stats: list[dict], output_dir: Path):
-    """Figure 1: Feasibility probability vs distance to threshold."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+    """Figure 1: Feasibility probability vs distance to threshold, split by device."""
+    from matplotlib.patches import Patch
 
-    for stat in config_stats:
-        color = ZONE_COLORS.get(stat["zone"], "#999999")
-        ax.scatter(
-            stat["distance_to_threshold_ms"],
-            stat["feasibility_rate"],
-            c=color,
-            s=60,
-            alpha=0.7,
-            edgecolors="black",
-            linewidth=0.5,
-            zorder=3,
+    gpu_stats = [s for s in config_stats if s["exec_device"] == "gpu"]
+    cpu_stats = [s for s in config_stats if s["exec_device"] == "cpu"]
+
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6), sharey=True)
+
+    for ax, stats_subset, device_label in [
+        (axes[0], gpu_stats, "GPU-resident (fp32/fp16, CUDA timing)"),
+        (axes[1], cpu_stats, "CPU-resident (int8_dynamic, perf_counter timing)"),
+    ]:
+        for stat in stats_subset:
+            color = ZONE_COLORS.get(stat["zone"], "#999999")
+            ax.scatter(
+                stat["distance_to_threshold_ms"],
+                stat["feasibility_rate"],
+                c=color,
+                s=60,
+                alpha=0.7,
+                edgecolors="black",
+                linewidth=0.5,
+                zorder=3,
+            )
+
+        ax.axvline(0, color="red", linestyle="--", alpha=0.5, label="20ms threshold")
+        ax.axhline(0.5, color="gray", linestyle=":", alpha=0.4)
+        ax.axvspan(-5, -1, alpha=0.05, color="green")
+        ax.axvspan(-1, 2, alpha=0.1, color="orange")
+        ax.axvspan(2, 6, alpha=0.05, color="red")
+
+        ax.set_xlabel("Distance to 20ms threshold (ms)\n(negative = under threshold)", fontsize=11)
+        ax.set_title(device_label, fontsize=11, fontweight="bold")
+        ax.set_ylim(-0.05, 1.05)
+        ax.grid(True, alpha=0.3)
+
+        n_flips = sum(1 for s in stats_subset if s["flip_rate"] > 0)
+        ax.text(
+            0.02, 0.02, f"{len(stats_subset)} configs, {n_flips} with flips",
+            transform=ax.transAxes, fontsize=9,
+            bbox=dict(boxstyle="round", facecolor="lightyellow", alpha=0.8),
         )
 
-    # Reference lines
-    ax.axvline(0, color="red", linestyle="--", alpha=0.5, label="20ms threshold")
-    ax.axhline(0.5, color="gray", linestyle=":", alpha=0.4)
+    axes[0].set_ylabel("Feasibility rate (fraction of repeats with p95 ≤ 20ms)", fontsize=11)
 
-    # Zone bands
-    ax.axvspan(-5, -1, alpha=0.05, color="green", label="Near feasible")
-    ax.axvspan(-1, 2, alpha=0.1, color="orange", label="Gray zone")
-    ax.axvspan(2, 6, alpha=0.05, color="red", label="Near infeasible")
-
-    ax.set_xlabel("Distance to 20ms threshold (ms)\n(negative = under threshold)", fontsize=12)
-    ax.set_ylabel("Feasibility rate (fraction of repeats with p95 ≤ 20ms)", fontsize=12)
-    ax.set_title("Stochastic Feasibility Boundary:\nFeasibility Probability vs Distance to Threshold", fontsize=13)
-    ax.set_ylim(-0.05, 1.05)
-    ax.legend(loc="upper right", fontsize=9)
-    ax.grid(True, alpha=0.3)
-
-    # Add zone color legend
-    from matplotlib.patches import Patch
     zone_patches = [
         Patch(facecolor=ZONE_COLORS[z], label=z.replace("_", " ").title())
         for z in ZONES
     ]
-    legend2 = ax.legend(handles=zone_patches, loc="center right", fontsize=8, title="Zone")
-    ax.add_artist(legend2)
+    axes[1].legend(handles=zone_patches, loc="center right", fontsize=8, title="Zone")
 
+    fig.suptitle("Stochastic Feasibility Boundary by Execution Device", fontsize=13, y=1.02)
     fig.tight_layout()
     fig.savefig(output_dir / "fig1_feasibility_vs_distance.png", dpi=300, bbox_inches="tight")
     plt.close(fig)
@@ -229,10 +284,12 @@ def figure2_by_model_family(config_stats: list[dict], output_dir: Path):
 
         for stat in model_stats:
             color = ZONE_COLORS.get(stat["zone"], "#999999")
+            marker = "^" if stat["exec_device"] == "cpu" else "o"
             ax.scatter(
                 stat["distance_to_threshold_ms"],
                 stat["feasibility_rate"],
                 c=color,
+                marker=marker,
                 s=50,
                 alpha=0.7,
                 edgecolors="black",
@@ -241,7 +298,9 @@ def figure2_by_model_family(config_stats: list[dict], output_dir: Path):
 
         ax.axvline(0, color="red", linestyle="--", alpha=0.5)
         ax.axhline(0.5, color="gray", linestyle=":", alpha=0.4)
-        ax.set_title(model_name, fontsize=11, fontweight="bold")
+        devices = sorted(set(s["exec_device"] for s in model_stats))
+        device_tag = ", ".join(d.upper() for d in devices)
+        ax.set_title(f"{model_name}\n({device_tag})", fontsize=10, fontweight="bold")
         ax.set_xlabel("Distance to threshold (ms)", fontsize=9)
         ax.set_ylim(-0.05, 1.05)
         ax.grid(True, alpha=0.3)
@@ -257,13 +316,21 @@ def figure2_by_model_family(config_stats: list[dict], output_dir: Path):
 
 
 def figure3_flip_rate_heatmap(config_stats: list[dict], output_dir: Path):
-    """Figure 3: Flip rate heatmap (model x backend vs quant x batch_size)."""
+    """Figure 3: Flip rate heatmap (model x backend vs quant x batch_size), device-labeled."""
     # Build row/col labels
     row_labels = sorted(set(f"{s['model']}|{s['backend']}" for s in config_stats))
     col_labels = sorted(set(f"{s['quantization']}|bs{s['batch_size']}" for s in config_stats))
 
     if not row_labels or not col_labels:
         return
+
+    # Map rows to their exec device for labeling
+    row_devices = {}
+    for stat in config_stats:
+        row_key = f"{stat['model']}|{stat['backend']}"
+        if row_key not in row_devices:
+            row_devices[row_key] = set()
+        row_devices[row_key].add(stat["exec_device"])
 
     data = np.full((len(row_labels), len(col_labels)), np.nan)
     annot = [[" " for _ in col_labels] for _ in row_labels]
@@ -284,9 +351,14 @@ def figure3_flip_rate_heatmap(config_stats: list[dict], output_dir: Path):
 
     im = ax.imshow(data, cmap="YlOrRd", aspect="auto", vmin=0, vmax=0.5)
 
-    # Labels
+    # Column labels: annotate device
+    col_device_labels = []
+    for c in col_labels:
+        quant = c.split("|")[0]
+        dev = "CPU" if quant in CPU_QUANT_TYPES else "GPU"
+        col_device_labels.append(c.replace("|", "\n") + f"\n[{dev}]")
     ax.set_xticks(range(len(col_labels)))
-    ax.set_xticklabels([c.replace("|", "\n") for c in col_labels], fontsize=7, rotation=45, ha="right")
+    ax.set_xticklabels(col_device_labels, fontsize=7, rotation=45, ha="right")
     ax.set_yticks(range(len(row_labels)))
     ax.set_yticklabels([r.replace("|", " / ") for r in row_labels], fontsize=7)
 
@@ -297,7 +369,7 @@ def figure3_flip_rate_heatmap(config_stats: list[dict], output_dir: Path):
                 ax.text(j, i, annot[i][j], ha="center", va="center", fontsize=6,
                         color="white" if data[i, j] > 0.25 else "black")
 
-    ax.set_title("Flip Rate Heatmap\n(fraction of repeats disagreeing with majority feasibility)", fontsize=11)
+    ax.set_title("Flip Rate Heatmap by Execution Device\n(fraction of repeats disagreeing with majority feasibility)", fontsize=11)
     fig.colorbar(im, ax=ax, label="Flip rate", shrink=0.8)
     fig.tight_layout()
     fig.savefig(output_dir / "fig3_flip_rate_heatmap.png", dpi=300, bbox_inches="tight")
@@ -343,7 +415,8 @@ def figure4_cold_vs_warm(config_stats: list[dict], output_dir: Path):
         ax.set_xticks(positions)
         ax.set_xticklabels(["Cold", "Warm"], fontsize=9)
 
-        label = f"{stat['model']}\n{stat['backend']}/{stat['quantization']}\nbs{stat['batch_size']}"
+        dev_tag = "CPU" if stat["exec_device"] == "cpu" else "GPU"
+        label = f"{stat['model']}\n{stat['backend']}/{stat['quantization']}\nbs{stat['batch_size']} [{dev_tag}]"
         ax.set_title(label, fontsize=8)
         ax.set_ylabel("p95 latency (ms)", fontsize=8)
         ax.tick_params(axis="y", labelsize=7)
@@ -360,58 +433,98 @@ def figure4_cold_vs_warm(config_stats: list[dict], output_dir: Path):
     print("  Saved fig4_cold_vs_warm.png")
 
 
-def figure5_temp_vs_latency(config_stats: list[dict], output_dir: Path):
-    """Figure 5: GPU temperature vs p95 latency."""
-    fig, ax = plt.subplots(figsize=(10, 6))
+def figure5_temp_vs_latency(config_stats: list[dict], groups: dict[str, list[dict]], output_dir: Path):
+    """Figure 5: Left=GPU temp vs latency for GPU configs, Right=latency time-series for CPU flippers."""
+    gpu_stats = [s for s in config_stats if s["exec_device"] == "gpu"]
+    cpu_stats = [s for s in config_stats if s["exec_device"] == "cpu"]
 
-    all_temps = []
-    all_latencies = []
+    fig, axes = plt.subplots(1, 2, figsize=(16, 6))
 
-    for stat in config_stats:
-        temps = stat["temperatures"]
+    # --- Left panel: GPU configs, GPU temperature ---
+    ax = axes[0]
+    all_temps, all_lats = [], []
+    for stat in gpu_stats:
+        temps = stat["gpu_temperatures"]
         p95s = stat["p95_values"]
-
-        if len(temps) != len(p95s):
-            # Align by taking min length
-            n = min(len(temps), len(p95s))
-            temps = temps[:n]
-            p95s = p95s[:n]
-
+        n = min(len(temps), len(p95s))
+        temps, p95s = temps[:n], p95s[:n]
         if not temps:
             continue
-
         color = MODEL_COLORS.get(stat["model"], "#999999")
         marker = MODEL_MARKERS.get(stat["model"], "o")
-
-        ax.scatter(
-            temps, p95s,
-            c=color, marker=marker, s=20, alpha=0.4,
-            label=stat["model"],
-        )
-
+        ax.scatter(temps, p95s, c=color, marker=marker, s=20, alpha=0.4, label=stat["model"])
         all_temps.extend(temps)
-        all_latencies.extend(p95s)
+        all_lats.extend(p95s)
 
-    if all_temps and all_latencies:
-        # Compute correlation
-        r, p = stats.pearsonr(all_temps, all_latencies)
-        ax.text(
-            0.02, 0.98,
-            f"Pearson r = {r:.3f}, p = {p:.2e}",
-            transform=ax.transAxes, fontsize=10,
-            verticalalignment="top",
-            bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5),
-        )
+    if len(all_temps) > 2:
+        r, p = stats.pearsonr(all_temps, all_lats)
+        ax.text(0.02, 0.98, f"Pooled Pearson r = {r:.3f}, p = {p:.2e}",
+                transform=ax.transAxes, fontsize=10, verticalalignment="top",
+                bbox=dict(boxstyle="round", facecolor="wheat", alpha=0.5))
 
     ax.axhline(LATENCY_THRESHOLD_MS, color="red", linestyle="--", alpha=0.5, label="20ms threshold")
     ax.set_xlabel("GPU Temperature (C)", fontsize=12)
     ax.set_ylabel("p95 Latency (ms)", fontsize=12)
-    ax.set_title("GPU Temperature vs Observed p95 Latency", fontsize=13)
-
-    # Deduplicate legend
+    ax.set_title("GPU-resident configs: GPU Temp vs Latency", fontsize=12, fontweight="bold")
     handles, labels = ax.get_legend_handles_labels()
-    by_label = dict(zip(labels, handles))
-    ax.legend(by_label.values(), by_label.keys(), loc="upper right", fontsize=9)
+    ax.legend(dict(zip(labels, handles)).values(), dict(zip(labels, handles)).keys(), loc="upper right", fontsize=9)
+    ax.grid(True, alpha=0.3)
+
+    # --- Right panel: CPU flippers — p95 latency over repeat index ---
+    ax = axes[1]
+    # Select CPU configs with flip_rate > 5%
+    cpu_flippers = sorted(
+        [s for s in cpu_stats if s["flip_rate"] > 0.05],
+        key=lambda s: s["flip_rate"], reverse=True,
+    )
+    if not cpu_flippers:
+        cpu_flippers = cpu_stats  # fallback: show all CPU configs
+
+    linestyles = ["-", "--", ":", "-."]
+    for idx, stat in enumerate(cpu_flippers):
+        key = stat["key"]
+        recs = groups.get(key, [])
+        # Sort by repeat_index to get time order
+        valid = sorted(
+            [r for r in recs if not r["crash"] and r["summary"]],
+            key=lambda r: r["repeat_index"],
+        )
+        if not valid:
+            continue
+
+        repeat_indices = list(range(len(valid)))
+        p95s = [r["summary"]["p95"] for r in valid]
+        feasible = [r["feasible"] for r in valid]
+        colors = ["#2ecc71" if f else "#e74c3c" for f in feasible]
+
+        label = f"bs{stat['batch_size']} (flip={stat['flip_rate']:.0%})"
+        ls = linestyles[idx % len(linestyles)]
+
+        # Line connecting points
+        ax.plot(repeat_indices, p95s, color="#888888", linewidth=0.5, alpha=0.4, linestyle=ls)
+        # Scatter colored by feasibility
+        ax.scatter(repeat_indices, p95s, c=colors, s=15, alpha=0.7, zorder=3, label=label)
+
+    ax.axhline(LATENCY_THRESHOLD_MS, color="red", linestyle="--", linewidth=1.5, alpha=0.7, label="20ms threshold")
+
+    # Custom legend for feasibility colors
+    from matplotlib.lines import Line2D
+    legend_elements = [
+        Line2D([0], [0], marker="o", color="w", markerfacecolor="#2ecc71", markersize=8, label="Feasible (p95 ≤ 20ms)"),
+        Line2D([0], [0], marker="o", color="w", markerfacecolor="#e74c3c", markersize=8, label="Infeasible (p95 > 20ms)"),
+        Line2D([0], [0], color="red", linestyle="--", linewidth=1.5, label="20ms threshold"),
+    ]
+    for idx, stat in enumerate(cpu_flippers):
+        if stat["flip_rate"] > 0:
+            legend_elements.append(
+                Line2D([0], [0], color="#888888", linestyle=linestyles[idx % len(linestyles)],
+                       linewidth=0.8, label=f"bs{stat['batch_size']} (flip={stat['flip_rate']:.0%})")
+            )
+    ax.legend(handles=legend_elements, loc="upper right", fontsize=8)
+
+    ax.set_xlabel("Repeat index (time order)", fontsize=12)
+    ax.set_ylabel("p95 Latency (ms)", fontsize=12)
+    ax.set_title("CPU-resident configs (int8_dynamic): Stochastic Feasibility", fontsize=12, fontweight="bold")
     ax.grid(True, alpha=0.3)
 
     fig.tight_layout()
@@ -434,6 +547,12 @@ def compute_summary_stats(
     any_instability = sum(1 for s in config_stats if s["flip_rate"] > 0)
     meaningful_instability = sum(1 for s in config_stats if s["flip_rate"] > 0.10)
     strong_instability = sum(1 for s in config_stats if s["flip_rate"] > 0.30)
+
+    # --- Device split ---
+    gpu_stats = [s for s in config_stats if s["exec_device"] == "gpu"]
+    cpu_stats = [s for s in config_stats if s["exec_device"] == "cpu"]
+    gpu_any_flips = sum(1 for s in gpu_stats if s["flip_rate"] > 0)
+    cpu_any_flips = sum(1 for s in cpu_stats if s["flip_rate"] > 0)
 
     # Gray zone width: range of distance where feasibility rate is 10%-90%
     transition_stats = [
@@ -463,18 +582,48 @@ def compute_summary_stats(
         else:
             per_model_width[model_name] = 0.0
 
-    # Temperature correlation
-    all_temps = []
-    all_lats = []
-    for stat in config_stats:
-        n = min(len(stat["temperatures"]), len(stat["p95_values"]))
-        all_temps.extend(stat["temperatures"][:n])
-        all_lats.extend(stat["p95_values"][:n])
+    # --- Temperature correlations: pooled by device ---
+    # GPU configs: GPU temp vs latency
+    gpu_temps_all, gpu_lats_all = [], []
+    for stat in gpu_stats:
+        n = min(len(stat["gpu_temperatures"]), len(stat["p95_values"]))
+        gpu_temps_all.extend(stat["gpu_temperatures"][:n])
+        gpu_lats_all.extend(stat["p95_values"][:n])
 
-    temp_corr_r = 0.0
-    temp_corr_p = 1.0
-    if len(all_temps) > 2:
-        temp_corr_r, temp_corr_p = stats.pearsonr(all_temps, all_lats)
+    gpu_temp_corr_r = 0.0
+    gpu_temp_corr_p = 1.0
+    if len(gpu_temps_all) > 2:
+        gpu_temp_corr_r, gpu_temp_corr_p = stats.pearsonr(gpu_temps_all, gpu_lats_all)
+
+    # CPU configs: CPU freq vs latency (or GPU temp as fallback for old data)
+    cpu_x_all, cpu_lats_all = [], []
+    cpu_temp_source = "cpu_freq"
+    has_cpu_freq = any(s["cpu_freqs"] for s in cpu_stats)
+    for stat in cpu_stats:
+        if has_cpu_freq and stat["cpu_freqs"]:
+            x_vals = stat["cpu_freqs"]
+            cpu_temp_source = "cpu_freq"
+        else:
+            x_vals = stat["gpu_temperatures"]
+            cpu_temp_source = "gpu_temp_fallback"
+        n = min(len(x_vals), len(stat["p95_values"]))
+        cpu_x_all.extend(x_vals[:n])
+        cpu_lats_all.extend(stat["p95_values"][:n])
+
+    cpu_temp_corr_r = 0.0
+    cpu_temp_corr_p = 1.0
+    if len(cpu_x_all) > 2:
+        cpu_temp_corr_r, cpu_temp_corr_p = stats.pearsonr(cpu_x_all, cpu_lats_all)
+
+    # --- Per-config correlations (>20 repeats) ---
+    per_config_correlations = []
+    for s in config_stats:
+        if s["per_config_temp_corr"] is not None:
+            per_config_correlations.append({
+                "config": s["key"],
+                "exec_device": s["exec_device"],
+                **s["per_config_temp_corr"],
+            })
 
     # Cold vs warm
     cold_lats = []
@@ -511,14 +660,22 @@ def compute_summary_stats(
     return {
         "total_configs": total_configs,
         "total_repeats": total_repeats,
+        "gpu_configs_total": len(gpu_stats),
+        "cpu_configs_total": len(cpu_stats),
+        "gpu_configs_any_flips": gpu_any_flips,
+        "cpu_configs_any_flips": cpu_any_flips,
         "configs_any_instability": any_instability,
         "configs_meaningful_instability_gt10pct": meaningful_instability,
         "configs_strong_instability_gt30pct": strong_instability,
         "gray_zone_width_ms": round(gray_zone_width, 3),
         "gray_zone_range_ms": [round(gray_zone_min, 3), round(gray_zone_max, 3)],
         "per_model_gray_zone_width_ms": per_model_width,
-        "temp_correlation_pearson_r": round(temp_corr_r, 4),
-        "temp_correlation_p_value": round(temp_corr_p, 6),
+        "gpu_temp_correlation_pearson_r": round(gpu_temp_corr_r, 4),
+        "gpu_temp_correlation_p_value": round(gpu_temp_corr_p, 6),
+        "cpu_corr_source": cpu_temp_source,
+        "cpu_corr_pearson_r": round(cpu_temp_corr_r, 4),
+        "cpu_corr_p_value": round(cpu_temp_corr_p, 6),
+        "per_config_correlations": per_config_correlations,
         "cold_mean_p95_ms": round(cold_mean, 3),
         "warm_mean_p95_ms": round(warm_mean, 3),
         "cold_warm_diff_ms": round(cold_mean - warm_mean, 3),
@@ -542,14 +699,29 @@ def go_no_go(summary: dict) -> str:
     total = summary["total_configs"]
 
     lines.append(f"\nConfigs probed: {total}")
+    lines.append(f"  GPU-resident: {summary['gpu_configs_total']}  (flips >0%: {summary['gpu_configs_any_flips']})")
+    lines.append(f"  CPU-resident: {summary['cpu_configs_total']}  (flips >0%: {summary['cpu_configs_any_flips']})")
     lines.append(f"Configs with any instability: {summary['configs_any_instability']}")
     lines.append(f"Configs with >10% flip rate: {meaningful}")
     lines.append(f"Configs with >30% flip rate: {strong}")
     lines.append(f"Gray zone width: {summary['gray_zone_width_ms']:.1f}ms")
     lines.append(f"Near-threshold configs flipping >10%: {near_frac:.0%}")
     lines.append(f"Cold-warm latency diff: {summary['cold_warm_diff_ms']:.2f}ms")
-    lines.append(f"Temp-latency correlation: r={summary['temp_correlation_pearson_r']:.3f}")
+    lines.append(f"GPU temp-latency corr (GPU configs only): r={summary['gpu_temp_correlation_pearson_r']:.3f}")
+    lines.append(f"CPU corr ({summary['cpu_corr_source']}): r={summary['cpu_corr_pearson_r']:.3f}")
     lines.append(f"Heterogeneity across models: {'YES' if heterogeneity else 'NO'}")
+
+    # Per-config correlations
+    per_cfg = summary.get("per_config_correlations", [])
+    if per_cfg:
+        lines.append(f"\nPer-config temp-latency correlations (n>20 repeats):")
+        for pc in per_cfg:
+            sig = "*" if pc["p_value"] < 0.05 else ""
+            lines.append(
+                f"  {pc['config']:50s} [{pc['exec_device'].upper():3s}] "
+                f"r={pc['pearson_r']:+.3f} p={pc['p_value']:.4f}{sig}  "
+                f"(n={pc['n']}, source={pc['temp_source']})"
+            )
 
     verdict_lines = []
     if near_frac > 0.10:
@@ -568,6 +740,13 @@ def go_no_go(summary: dict) -> str:
             "NO-GO -- Boundary is deterministic. "
             "No configs show meaningful feasibility flips. "
             "Pivot to standard crash prediction."
+        )
+
+    if summary["gpu_configs_any_flips"] == 0 and summary["cpu_configs_any_flips"] > 0:
+        verdict_lines.append(
+            "NOTE: All flips are in CPU-resident (int8_dynamic) configs. "
+            "GPU-resident configs show deterministic feasibility. "
+            "Stochasticity is CPU scheduling jitter, not GPU thermal drift."
         )
 
     if heterogeneity:
@@ -632,7 +811,7 @@ def main():
     figure2_by_model_family(config_stats, args.output_dir)
     figure3_flip_rate_heatmap(config_stats, args.output_dir)
     figure4_cold_vs_warm(config_stats, args.output_dir)
-    figure5_temp_vs_latency(config_stats, args.output_dir)
+    figure5_temp_vs_latency(config_stats, groups, args.output_dir)
 
     # Compute summary statistics
     print("\nComputing summary statistics...")
