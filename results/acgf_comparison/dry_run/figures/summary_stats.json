@@ -1,0 +1,53 @@
+{
+  "random": {
+    "n_seeds": 2,
+    "accuracy_mean": 0.746,
+    "accuracy_std": 0.0,
+    "accuracy_median": 0.746,
+    "unique_configs_mean": 10.0,
+    "n_feasible_mean": 1.0,
+    "n_infeasible_mean": 1.5,
+    "n_crashed_mean": 7.5,
+    "n_borderline_mean": 0.0,
+    "n_reeval_mean": 0.0,
+    "n_rescued_mean": 0.0,
+    "n_caught_mean": 0.0,
+    "wall_clock_mean_s": 47.10684895515442,
+    "waste_rate": 0.15000000000000002,
+    "no_feasible_rate": 0.5
+  },
+  "tba": {
+    "n_seeds": 2,
+    "accuracy_mean": 0.743,
+    "accuracy_std": 0.02300000000000002,
+    "accuracy_median": 0.743,
+    "unique_configs_mean": 10.0,
+    "n_feasible_mean": 3.5,
+    "n_infeasible_mean": 1.5,
+    "n_crashed_mean": 5.0,
+    "n_borderline_mean": 0.0,
+    "n_reeval_mean": 0.0,
+    "n_rescued_mean": 0.0,
+    "n_caught_mean": 0.0,
+    "wall_clock_mean_s": 50.92233669757843,
+    "waste_rate": 0.15000000000000002,
+    "no_feasible_rate": 0.0
+  },
+  "tba_acgf": {
+    "n_seeds": 2,
+    "accuracy_mean": 0.756,
+    "accuracy_std": 0.010000000000000009,
+    "accuracy_median": 0.756,
+    "unique_configs_mean": 10.0,
+    "n_feasible_mean": 6.0,
+    "n_infeasible_mean": 0.0,
+    "n_crashed_mean": 4.0,
+    "n_borderline_mean": 0.0,
+    "n_reeval_mean": 0.0,
+    "n_rescued_mean": 0.0,
+    "n_caught_mean": 0.0,
+    "wall_clock_mean_s": 34.42168164253235,
+    "waste_rate": 0.0,
+    "no_feasible_rate": 0.0
+  }
+}
